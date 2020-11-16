@@ -1,6 +1,13 @@
 #include "khalah_shell.h"
 
 
+/**
+ * main - run our shell!!!
+ * @argc: the arguments count
+ * @argv: the arguments passed in
+ * @env: the environment variables
+ * Return: depends, but it does the thing
+ */
 int main(int argc, char *argv[], char **env)
 {
 	int history_count = 0;
@@ -10,56 +17,42 @@ int main(int argc, char *argv[], char **env)
 	char *stdoutval = malloc(256);
 	int char_count;
 
-	if(stdoutval == NULL)
-	{
+	if (argc == 0)
 		exit(1);
-	}
 
-	if(argc == 0)
-	{
-		exit(1);
-	}
-
-	do
-	{
-		if(isatty(STDIN_FILENO)) {
+	do {
+		if (isatty(STDIN_FILENO))
 			promptuser(tokenized_input);
-		} else {
+		if (!isatty(STDIN_FILENO))
+		{
 			char_count = read(STDIN_FILENO, stdoutval, 256);
-			if(char_count > 0)
-			{
-				getargs(tokenized_input, stdoutval, " ");
-			} else {
-				printf("error");
-			}
+			if (char_count > 0)
+				tokenize_str(tokenized_input, stdoutval, " ");
 		}
 
-		if(_strsareequal(tokenized_input[0], "exit"))
-		{
+		if (_strsareequal(tokenized_input[0], "exit"))
 			exit(0);
-		}
 
 		history_count++;
 		fork_pid = fork();
-		if(fork_pid == -1)
+		if (fork_pid == -1)
 		{
-			perror("Error Forking");
 			exit(1);
 		}
 
 
-		if(fork_pid == 0)
-		{
-			/* finally let's try and run it */
+		if (fork_pid == 0)
 			handleinput(argv[0], tokenized_input, env, history_count);
-		} else {
+		else
 			wait(&status);
-		}
-	}
-	while(isatty(STDIN_FILENO));
+	} while (isatty(STDIN_FILENO));
 
 	return (0);
 }
+/**
+ * promptuser - Prompt the user for input!
+ * @tokenized_input: the char** to place the tokenized input
+ */
 void promptuser(char **tokenized_input)
 {
 	size_t BUFF_SIZE = 256;
@@ -69,63 +62,70 @@ void promptuser(char **tokenized_input)
 
 	write(1, PROMPT, _strlen(PROMPT));
 	char_input_count = getline(&buffer, &BUFF_SIZE, stdin);
-	if(char_input_count == -1)
+	if (char_input_count == -1)
 	{
 		printf("Bad input");
 		exit(1);
 	}
 
 	/* let's split the arguments into an array */
-	getargs(tokenized_input, buffer, " ");
+	tokenize_str(tokenized_input, buffer, " ");
 }
-void handleinput(char *command, char *tokenized_input[], char *environ[], int history_count)
+
+/**
+ * handleinput - Take the commands and environ and act on it!
+ * @command: The command entered to run this shell
+ * @input: A tokenized array of the user input
+ * @environ: the environment variables
+ * @h_count: the history count so far
+ */
+void handleinput(char *command, char *input[], char *environ[], int h_count)
 {
 	char *tokenized_paths[256] = {NULL};
 	char *found_path = NULL;
-	int idx;
+	int idx = 0;
 	struct stat filestatus;
 	char *path_vars;
 
-	if(tokenized_input[0][0] == '/' || tokenized_input[0][0] == '.')
+	if (input[0][0] == '/' || input[0][0] == '.')
 	{
-		/* try and run a file */
-		if(execve(tokenized_input[0], tokenized_input, NULL) == -1)
-		{
-			perror(_strmcat(4, "-", command, ": ", tokenized_input[0]));
-		}
-	} else if(_strsareequal(tokenized_input[0], "env")) {
-		/* print the environment */
-		for(idx = 0; environ[idx] != NULL; idx++)
+		if (execve(input[0], input, environ) == -1)
+			perror(_strmcat(4, "-", command, ": ", input[0]));
+	}
+	if (_strsareequal(input[0], "env"))
+	{
+		for (idx = 0; environ[idx] != NULL; idx++)
 		{
 			printf("%s\n", environ[idx]);
 		}
 		exit(0);
-	} else {
-		/* otherwise it must be a command */
-		/* try and run through the path and see if the command can be run */
-		path_vars = _findkeyvalue("PATH", environ);
-		getargs(tokenized_paths, path_vars, ":");
-
-		idx = 0;
-
-		while(tokenized_paths[idx] != NULL)
-		{
-			found_path = _strmcat(3, tokenized_paths[idx], "/", tokenized_input[0]);
-			if(stat(found_path, &filestatus) == 0)
-			{
-				if(execve(found_path, tokenized_input, NULL) == -1)
-				{
-					perror(_strmcat(4, "-", command, ": ", tokenized_input[0]));
-				}
-			}
-			idx++;
-		}
-		printf("%s: %d: %s: not found\n",command, history_count, tokenized_input[0]);
 	}
+
+	/* otherwise it must be a command */
+	/* try and run through the path and see if the command can be run */
+	path_vars = _findkeyvalue("PATH", environ);
+	tokenize_str(tokenized_paths, path_vars, ":");
+
+	while (tokenized_paths[idx] != NULL)
+	{
+		
+		found_path = _strmcat(3, tokenized_paths[idx], "/", input[0]);
+		if (stat(found_path, &filestatus) == 0) /* file found!! */
+			if (execve(found_path, input, environ) == -1)
+				perror(_strmcat(4, "-", command, ": ", input[0]));
+		idx++;
+	}
+	printf("%s: %d: %s: not found\n", command, h_count, input[0]);
 }
 
 
-void getargs(char *ret[], char *input, char *needle)
+/**
+ * tokenize_str - takes a string and splits it on some char into and array
+ * @ret: The place to put the tokenized strings
+ * @input: the string to tokenize
+ * @needle: the char we split the string on
+ */
+void tokenize_str(char *ret[], char *input, char *needle)
 {
 	char *token;
 	int idx;
