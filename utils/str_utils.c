@@ -42,9 +42,12 @@ char *_strremovechar(char *str, char ch)
 
 	while (str[idx++] != '\0')
 	{
-		charcount++;
+		if (str[idx] == ch)
+		{
+			charcount++;
+		}
 	}
-	newstr = malloc(strl - charcount);
+	newstr = malloc(strl - charcount + 1);
 
 	for (idx = 0, jdx = 0; str[idx] != '\0'; idx++)
 	{
@@ -54,6 +57,8 @@ char *_strremovechar(char *str, char ch)
 			jdx++;
 		}
 	}
+
+	newstr[idx] = '\0';
 
 	return (newstr);
 }
@@ -165,6 +170,8 @@ char *_strcat(char *stra, char *strb)
 	{
 		retstr[idx] = strb[jdx];
 	}
+
+	retstr[idx] = '\0';
 
 	return (retstr);
 }
