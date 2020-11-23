@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
-#include "../khalah_shell.h"
+#include "../hsh.h"
 
 
 int _strlen(char *str);
