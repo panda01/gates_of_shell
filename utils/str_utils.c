@@ -41,14 +41,14 @@ char *_strremovechar(char *str, char ch)
 	int jdx;
 	char *newstr;
 
-	while (str[idx++] != '\0')
+	while (str[idx] != '\0')
 	{
-		if (str[idx] == ch)
+		if (str[idx++] == ch)
 		{
 			charcount++;
 		}
 	}
-	newstr = malloc(strl - charcount + 1);
+	newstr = malloc(strl - charcount);
 
 	for (idx = 0, jdx = 0; str[idx] != '\0'; idx++)
 	{
@@ -186,13 +186,17 @@ char *_strmcat(int count, ...)
 {
 	int idx;
 	char *retstr = "";
+	char *freetarget;
 	va_list str_args;
 
 	va_start(str_args, count);
 
+
 	for (idx = 0; idx < count; idx++)
 	{
+		freetarget = retstr;
 		retstr = _strcat(retstr, va_arg(str_args, char *));
+		free(freetarget);
 	}
 
 	return (retstr);

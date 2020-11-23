@@ -16,6 +16,7 @@
 void promptuser(char **tokenized_input);
 void handleinput(char *command, char *tokenized_input[], char *environ[], int history_count);
 void tokenize_str(char *ret[], char *input, char *needle);
+void freedoublepointer(char **freeablebuffs);
 
 
 #endif

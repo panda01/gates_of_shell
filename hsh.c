@@ -13,7 +13,7 @@ int main(int argc, char *argv[], char **env)
 	int history_count = 0;
 	int status;
 	pid_t fork_pid;
-	char *tokenized_input[MAX_ARGS];
+	char *tokenized_input[MAX_ARGS] = {NULL};
 	char *stdoutval = malloc(256);
 	int char_count;
 
@@ -42,12 +42,23 @@ int main(int argc, char *argv[], char **env)
 
 
 		if (fork_pid == 0)
+		{
 			handleinput(argv[0], tokenized_input, env, history_count);
+			freedoublepointer(tokenized_input);
+		}
 		else
 			wait(&status);
 	} while (isatty(STDIN_FILENO));
 
 	return (0);
+}
+void freedoublepointer(char **freeablebuffs)
+{
+	int idx = 0;
+	while(freeablebuffs[idx] != NULL)
+	{
+		free(freeablebuffs[idx++]);
+	}
 }
 /**
  * promptuser - Prompt the user for input!
@@ -70,6 +81,8 @@ void promptuser(char **tokenized_input)
 
 	/* let's split the arguments into an array */
 	tokenize_str(tokenized_input, buffer, " ");
+
+	free(buffer);
 }
 
 /**
@@ -86,11 +99,16 @@ void handleinput(char *command, char *input[], char *environ[], int h_count)
 	int idx = 0;
 	struct stat filestatus;
 	char *path_vars;
+	char *error;
 
 	if (input[0][0] == '/' || input[0][0] == '.')
 	{
 		if (execve(input[0], input, environ) == -1)
-			perror(_strmcat(4, "-", command, ": ", input[0]));
+		{
+			error = _strmcat(4, "-", command, ": ", input[0]);
+			perror(error);
+			free(error);
+		}
 	}
 	if (_strsareequal(input[0], "env"))
 	{
@@ -111,8 +129,15 @@ void handleinput(char *command, char *input[], char *environ[], int h_count)
 		
 		found_path = _strmcat(3, tokenized_paths[idx], "/", input[0]);
 		if (stat(found_path, &filestatus) == 0) /* file found!! */
+		{
 			if (execve(found_path, input, environ) == -1)
-				perror(_strmcat(4, "-", command, ": ", input[0]));
+			{
+				error = _strmcat(4, "-", command, ": ", input[0]);
+				perror(error);
+				free(error);
+			}
+			free(found_path);
+		}
 		idx++;
 	}
 	printf("%s: %d: %s: not found\n", command, h_count, input[0]);
@@ -129,13 +154,6 @@ void tokenize_str(char *ret[], char *input, char *needle)
 {
 	char *token;
 	int idx;
-
-	idx = 0;
-	while (idx < MAX_ARGS)
-	{
-		ret[idx] = NULL;
-		idx++;
-	}
 
 	token = strtok(input, needle);
 	ret[0] = _strremovechar(token, '\n');
