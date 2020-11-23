@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-char *_strremovechar(char *str, char ch);
-int _strlen(char *str);
+#include "khalah_shell.h"
 
 /**
  * main - execve example
@@ -12,6 +10,56 @@ int _strlen(char *str);
  */
 int main(void)
 {
+	int status;
+	int num_chars_typed;
+	size_t MAX_INPUT_CHARS = 256;
+	char *user_raw_input = malloc(MAX_INPUT_CHARS);
+	char *alltheargs[2] = {NULL, NULL};
+	char *clean_input = malloc(MAX_INPUT_CHARS);
+	pid_t fork_id;
+
+
+	do {
+
+		num_chars_typed = getline(&user_raw_input, &MAX_INPUT_CHARS, stdin);
+		clean_input = _strremovechar(user_raw_input, '\n');
+
+
+		alltheargs[0] = clean_input;
+
+		fork_id = fork();
+		if(fork_id == 0)
+		{
+			if (execve(alltheargs[0], alltheargs, NULL) == -1)
+			{
+				perror("command not found");
+			}
+		}
+
+		wait(&status);
+
+	} while (1);
+
+	/*
+	int status;
+	pid_t fork_id;
+	printf("before execve\n");
+	char *alltheargs[] = {"/bin/ls", NULL};
+
+	printf("before fork\n");
+	fork_id = fork();
+	printf("after fork\n");
+	/* are we in the child process??? */
+	/*
+	if(fork_id == 0)
+	{
+		execve(alltheargs[0], alltheargs, NULL);
+	}
+	printf("before wait\n");
+	wait(&status);
+	printf("after execve\n");
+	/*
+
 	int num_chars_typed;
 	size_t MAX_INPUT_CHARS = 256;
 	char *user_raw_input;
@@ -32,13 +80,13 @@ int main(void)
 
 
 	/*  Runs the ls command!!! */
+	/*
 	char *alltheargs[] = {clean_input, NULL};
 	execve(alltheargs[0], alltheargs, NULL);
 
 
 	free(user_raw_input);
 	free(clean_input);
-	free(alltheargs);
 
 
 	/*
@@ -71,46 +119,3 @@ int main(void)
 
 	return (0);
 }
-
-int _strlen(char *str)
-{
-	int idx = 0;
-	while(str[idx] != '\0')
-	{
-		idx++;
-	}
-	return idx;
-}
-
-/**
- * _strremovechar - Removes all occurences of any character from a string
- * @str: The string we're remove characters from
- * @ch: the character to remove
- * Return: the new string with the removed character
- */
-char *_strremovechar(char *str, char ch)
-{
-	int strl = _strlen(str);
-	int charcount = 0;
-	int idx;
-	int jdx;
-	char *newstr;
-
-	while (str[idx++] != '\0')
-	{
-		charcount++;
-	}
-	newstr = malloc(strl - charcount);
-
-	for (idx = 0, jdx = 0; str[idx] != '\0'; idx++)
-	{
-		if (str[idx] != ch)
-		{
-			newstr[jdx] = str[idx];
-			jdx++;
-		}
-	}
-
-	return (newstr);
-}
-

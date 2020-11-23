@@ -1,4 +1,4 @@
-#include "khalah_shell.h"
+#include "hsh.h"
 
 
 /**
@@ -61,7 +61,7 @@ void promptuser(char **tokenized_input)
 	int char_input_count;
 
 	write(1, PROMPT, _strlen(PROMPT));
-	char_input_count = getline(&buffer, &BUFF_SIZE, stdin);
+	char_input_count = read(STDIN_FILENO, buffer, BUFF_SIZE);
 	if (char_input_count == -1)
 	{
 		printf("Bad input");

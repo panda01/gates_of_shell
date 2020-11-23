@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include "../khalah_shell.h"
 
+
 int _strlen(char *str);
 char *_strremovechar(char *str, char ch);
 char *_findkeyvalue(char *needle, char **haystack);
